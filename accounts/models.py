@@ -1,56 +1,98 @@
+# accounts/models.py
 from django.db import models
-from django.contrib.auth.models import User
 
-# User Profile model (extends the built-in User model)
+# USER model
+class User(models.Model):
+    id = models.AutoField(primary_key=True)
+    username = models.CharField(max_length=255)
+    email = models.CharField(max_length=255)
+    password = models.CharField(max_length=255)
+    date_joined = models.DateTimeField(auto_now_add=True)
+    is_active = models.BooleanField(default=True)
+
+    #table name
+
+    class Meta:
+        db_table = 'users'
+        unique_together = ('username', 'email')
+
+
+
+# USER_PROFILE model
 class UserProfile(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
-    profileImage = models.ImageField(upload_to='profile_images/', null=True, blank=True)
-    initial_balance = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    current_balance = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    total_investment = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    total_profit_loss = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    id = models.AutoField(primary_key=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    initial_balance = models.DecimalField(max_digits=10, decimal_places=2)
+    current_balance = models.DecimalField(max_digits=10, decimal_places=2)
+    total_investment = models.DecimalField(max_digits=10, decimal_places=2)
+    total_profit_loss = models.DecimalField(max_digits=10, decimal_places=2)
 
-    def __str__(self):
-        return f'{self.user.username} Profile'
+    #table name
+    class Meta:
+        db_table = 'user_profiles'
+        unique_together = ('user',)
 
-# Stock model
+
+# STOCK model
 class Stock(models.Model):
-    symbol = models.CharField(max_length=10, unique=True)
-    name = models.CharField(max_length=100)
+    id = models.AutoField(primary_key=True)
+    symbol = models.CharField(max_length=255)
+    name = models.CharField(max_length=255)
     current_price = models.DecimalField(max_digits=10, decimal_places=2)
     previous_close = models.DecimalField(max_digits=10, decimal_places=2)
     market_cap = models.DecimalField(max_digits=15, decimal_places=2)
     last_updated = models.DateTimeField(auto_now=True)
 
-    def __str__(self):
-        return self.name
+    #table name
+    class Meta:
+        db_table = 'stocks'
+        unique_together = ('symbol',)
+       
 
-# Portfolio model (for user's stock holdings)
+# PORTFOLIO model
 class Portfolio(models.Model):
+    id = models.AutoField(primary_key=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     stock = models.ForeignKey(Stock, on_delete=models.CASCADE)
-    quantity = models.IntegerField()
+    quantity = models.DecimalField(max_digits=10, decimal_places=2)
     purchase_price = models.DecimalField(max_digits=10, decimal_places=2)
-    purchase_date = models.DateTimeField()
+    purchase_date = models.DateTimeField(auto_now_add=True)
 
-    def __str__(self):
-        return f'{self.user.username} Portfolio'
+    #table name
+    class Meta:
+        db_table = 'portfolios'
+        unique_together = ('user', 'stock')
+        ordering = ['-purchase_date']
 
-# Transaction model (tracks user transactions on stocks)
+
+
+# WATCHLIST model
+
+
+# TRANSACTION model
 class Transaction(models.Model):
+    id = models.AutoField(primary_key=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     stock = models.ForeignKey(Stock, on_delete=models.CASCADE)
-    transaction_type = models.CharField(max_length=20)  # 'buy' or 'sell'
-    quantity = models.IntegerField()
+    transaction_type = models.CharField(max_length=10)  # Buy/Sell
+    quantity = models.DecimalField(max_digits=10, decimal_places=2)
     price_per_share = models.DecimalField(max_digits=10, decimal_places=2)
     total_value = models.DecimalField(max_digits=15, decimal_places=2)
     timestamp = models.DateTimeField(auto_now_add=True)
+    #table name
+    class Meta:
+        db_table = 'transactions'
+        ordering = ['-timestamp']
+        unique_together = ('user', 'stock', 'transaction_type', 'timestamp')
+        indexes = [
+            models.Index(fields=['user', 'transaction_type', 'timestamp']),
+            models.Index(fields=['user', 'stock', 'transaction_type']),
+        ]
 
-    def __str__(self):
-        return f'{self.user.username} {self.transaction_type} {self.stock.name}'
 
-# Stock Price History model (historical stock prices)
+# STOCK_PRICE_HISTORY model
 class StockPriceHistory(models.Model):
+    id = models.AutoField(primary_key=True)
     stock = models.ForeignKey(Stock, on_delete=models.CASCADE)
     open_price = models.DecimalField(max_digits=10, decimal_places=2)
     close_price = models.DecimalField(max_digits=10, decimal_places=2)
@@ -58,5 +100,10 @@ class StockPriceHistory(models.Model):
     low_price = models.DecimalField(max_digits=10, decimal_places=2)
     date = models.DateTimeField()
 
-    def __str__(self):
-        return f'{self.stock.name} Price History on {self.date.strftime("%Y-%m-%d")}'
+    class Meta:
+        db_table = 'stock_price_histories'
+        unique_together = ('stock', 'date')
+        ordering = ['-date']
+        indexes = [
+            models.Index(fields=['stock', 'date']),
+        ]

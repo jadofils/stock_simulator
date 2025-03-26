@@ -8,8 +8,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Load environment variables from the .env file
 load_dotenv()
-# Load environment variables from the .env file
-load_dotenv()
 
 # Database settings using the DATABASE_URL
 DATABASES = {
@@ -19,6 +17,7 @@ DATABASES = {
 # Security settings
 SECRET_KEY = os.getenv('SECRET_KEY')
 DEBUG = os.getenv('DEBUG') == 'True'
+
 # Application definition
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -27,17 +26,22 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework',  # Add this line for DRF support
+
     # Custom apps
     'accounts',       # User authentication app
     'trading',        # Stock trading core app
     'dashboard',      # User dashboard app
 ]
 
-# Add the static files directory for each app if you have any (optional)
+# Static files configuration
 STATICFILES_DIRS = [
-    BASE_DIR / "static",  # Assuming you have a static folder in the project root
+    os.path.join(BASE_DIR, 'static'),  # Central static folder (outside of 'accounts' app)
 ]
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')  # Where collected static files will be stored
+STATIC_URL = '/static/'  # URL prefix for static files
 
+# Middleware configuration
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -48,15 +52,17 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+# URL Configuration
 ROOT_URLCONF = 'stock_simulator.urls'
 
+# Templates Configuration
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [
-            BASE_DIR / 'templates',  # If you have project-wide templates
+            BASE_DIR / 'templates',  # Main templates directory
         ],      
-        'APP_DIRS': True,
+        'APP_DIRS': True,  # Enable app-level template directories
         'OPTIONS': {
             'context_processors': [
                 'django.template.context_processors.debug',
@@ -68,6 +74,7 @@ TEMPLATES = [
     },
 ]
 
+# WSGI application
 WSGI_APPLICATION = 'stock_simulator.wsgi.application'
 
 # Password validation
@@ -86,17 +93,11 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-# Internationalization
+# Internationalization settings
 LANGUAGE_CODE = 'en-us'
-
 TIME_ZONE = 'UTC'
-
 USE_I18N = True
-
 USE_TZ = True
-
-# Static files (CSS, JavaScript, Images)
-STATIC_URL = 'static/'
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
