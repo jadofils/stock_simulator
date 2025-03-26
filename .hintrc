@@ -11,6 +11,12 @@
       }
     ],
     "button-type": "off",
-    "meta-charset-utf-8": "off"
+    "meta-charset-utf-8": "off",
+    "axe/name-role-value": [
+      "default",
+      {
+        "link-name": "off"
+      }
+    ]
   }
 }

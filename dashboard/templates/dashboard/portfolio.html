@@ -1,0 +1,54 @@
+<!-- portfolio.html -->
+<div class="main-content">
+    <h2>Portfolio</h2>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Stock</th>
+                <th>Quantity</th>
+                <th>Purchase Price</th>
+                <th>Current Price</th>
+                <th>Profit/Loss</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Sample Portfolio Data Row 1 -->
+            <tr>
+                <td>Apple Inc. (AAPL)</td>
+                <td>100</td>
+                <td>$150.00</td>
+                <td>$160.00</td>
+                <td>
+                    <span class="text-success">
+                        $1000.00
+                    </span>
+                </td>
+                <td>
+                    <button class="btn btn-sm btn-primary">Sell</button>
+                </td>
+            </tr>
+
+            <!-- Sample Portfolio Data Row 2 -->
+            <tr>
+                <td>Microsoft Corp. (MSFT)</td>
+                <td>50</td>
+                <td>$200.00</td>
+                <td>$190.00</td>
+                <td>
+                    <span class="text-danger">
+                        -$500.00
+                    </span>
+                </td>
+                <td>
+                    <button class="btn btn-sm btn-primary">Sell</button>
+                </td>
+            </tr>
+
+            <!-- No Portfolio Data Row -->
+            <tr>
+                <td colspan="6" class="text-center">No more stocks in your portfolio.</td>
+            </tr>
+        </tbody>
+    </table>
+</div>

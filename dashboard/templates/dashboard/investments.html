@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-Time Stock Market Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+
+        .stock-table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: white;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .stock-table th, .stock-table td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+
+        .stock-table th {
+            background-color: #2c3e50;
+            color: white;
+        }
+
+        .positive-row {
+            background-color: #d4edda; /* Light green */
+        }
+
+        .negative-row {
+            background-color: #f8d7da; /* Light red */
+        }
+
+        .neutral-row {
+            background-color: #fff3cd; /* Light gold */
+        }
+
+        .stock-table tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+
+        .stock-table tr:hover {
+            background-color: #ddd;
+        }
+
+        .loader {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100px;
+        }
+
+        .circle {
+            width: 40px;
+            height: 40px;
+            border: 5px solid #ccc;
+            border-top: 5px solid #2c3e50;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .timer-refresh {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .timer {
+            font-size: 20px;
+            margin-bottom: 10px;
+        }
+
+        .refresh-button {
+            padding: 10px 20px;
+            background-color: #2c3e50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        .refresh-button:hover {
+            background-color: #34495e;
+        }
+    </style>
+</head>
+<body>
+    <h1>Real-Time Stock Market Dashboard</h1>
+    
+    <div class="loader" id="loader">
+        <div class="circle"></div>
+    </div>
+
+    <div class="timer-refresh">
+        <div class="timer" id="timer">Next refresh in: 15:00</div>
+        <button class="refresh-button" onclick="manualRefresh()">Refresh Now</button>
+    </div>
+
+    <table class="stock-table">
+        <thead>
+            <tr>
+                <th>Symbol</th>
+                <th>Company Name</th>
+                <th>Current Price</th>
+                <th>Change</th>
+                <th>Change %</th>
+                <th>Volume</th>
+                <th>Market Cap</th>
+                <th>52-Week High</th>
+                <th>52-Week Low</th>
+            </tr>
+        </thead>
+        <tbody id="stockTableBody">
+            <!-- Rows will be dynamically populated -->
+        </tbody>
+    </table>
+
+    <script>
+        let countdown = 900; // 15 minutes in seconds
+
+        function updateTimerDisplay() {
+            const minutes = Math.floor(countdown / 60);
+            const seconds = countdown % 60;
+            document.getElementById("timer").textContent = `Next refresh in: ${minutes}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        function startCountdown() {
+            updateTimerDisplay();
+            const interval = setInterval(() => {
+                countdown -= 1;
+                if (countdown <= 0) {
+                    clearInterval(interval);
+                    fetchStockData();
+                    countdown = 900; // Reset countdown
+                    startCountdown();
+                }
+                updateTimerDisplay();
+            }, 1000);
+        }
+
+        async function fetchStockData() {
+            try {
+                document.getElementById('loader').style.display = 'flex';
+
+                const response = await fetch('/api/v1/yfinance/investments');
+                const stockData = await response.json();
+
+                document.getElementById('loader').style.display = 'none';
+                const tableBody = document.getElementById('stockTableBody');
+                tableBody.innerHTML = '';
+
+                stockData.forEach(stock => {
+                    const row = document.createElement('tr');
+                    
+                    // Assign class based on the stock change
+                    let rowClass = 'neutral-row'; // Default to neutral
+                    if (stock.change > 0) {
+                        rowClass = 'positive-row';
+                    } else if (stock.change < 0) {
+                        rowClass = 'negative-row';
+                    }
+
+                    row.className = rowClass;
+
+                    row.innerHTML = `
+                        <td>${stock.symbol}</td>
+                        <td>${stock.name}</td>
+                        <td>$${stock.current_price.toFixed(2)}</td>
+                        <td>$${stock.change.toFixed(2)}</td>
+                        <td>${stock.change_percent.toFixed(2)}%</td>
+                        <td>${stock.volume.toLocaleString()}</td>
+                        <td>$${(stock.market_cap / 1_000_000_000).toFixed(2)}B</td>
+                        <td>$${stock['52_week_high'].toFixed(2)}</td>
+                        <td>$${stock['52_week_low'].toFixed(2)}</td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            } catch (error) {
+                console.error('Error fetching stock data:', error);
+                document.getElementById('loader').innerHTML = 'Failed to load data.';
+            }
+        }
+
+        function manualRefresh() {
+            countdown = 10; // Reset countdown
+            fetchStockData();
+        }
+
+        // Initial setup
+        fetchStockData();
+        startCountdown();
+    </script>
+</body>
+</html>

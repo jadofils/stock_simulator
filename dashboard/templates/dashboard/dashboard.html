@@ -1,0 +1,121 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Trading Simulator - Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --background-color: #ecf0f1;
+            --white: #ffffff;
+            --text-color: #333;
+        }
+        
+        body {
+            display: flex;
+            min-height: 100vh;
+            background-color: var(--background-color);
+        }
+        .sidebar {
+            width: 250px;
+            background-color: var(--primary-color);
+            color: var(--white);
+            padding-top: 20px;
+            position: fixed;
+            height: 100vh;
+        }
+        .sidebar a {
+            display: block;
+            color: var(--white);
+            padding: 15px;
+            text-decoration: none;
+            transition: 0.3s;
+        }
+        .sidebar a:hover {
+            background-color: var(--secondary-color);
+        }
+        .content {
+            margin-left: 250px;
+            width: calc(100% - 250px);
+            padding: 20px;
+        }
+        .navbar {
+            background-color: var(--white);
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .navbar .nav-item {
+            margin-left: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <h3 class="text-center">Dashboard</h3>
+        <a href="{% url 'dashboard' %}"><i class="bi bi-house"></i> Home</a>
+        <a href="#" class="sidebar-link" data-content="portfolio"><i class="bi bi-pie-chart"></i> Portfolio</a>
+        <a href="" class="sidebar-link" data-content="stocks"><i class="bi bi-graph-up"></i> Stocks</a>
+        <a href="" class="sidebar-link" data-content="transactions"><i class="bi bi-cash"></i> Transactions</a>
+        <a href=""  class="sidebar-link" data-content="history"><i class="bi bi-clock-history"></i> History</a>
+        <a href="" class="sidebar-link" data-content="watchlist"><i class="bi bi-bookmark"></i> Watchlist</a>
+        <a href="" class="sidebar-link" data-content="markets"><i class="bi bi-newspaper"></i> Market News</a>
+        <!--investments-->
+        <a href="" class="sidebar-link" data-content="investments"><i class="bi bi-wallet2"></i> Investments</a>
+
+        <a href=""><i class="bi bi-bar-chart"></i> Analytics</a>
+        <a href=""><i class="bi bi-gear"></i> Settings</a>
+        <a href=""><i class="bi bi-box-arrow-right"></i> Logout</a>
+    </div>
+    
+    
+    <div class="content">
+        <nav class="navbar">
+            <span>Welcome, {{ user.username }}</span>
+            <div>
+                <a href="#" class="nav-item"><i class="bi bi-bell"></i></a>
+                <a href="#" class="nav-item"><i class="bi bi-gear"></i></a>
+                <a href="#" class="nav-item"><i class="bi bi-person-circle"></i></a>
+            </div>
+        </nav>
+        
+        <div id="main-content">
+            <h2>Dashboard Overview</h2>
+            <p>Welcome to your stock trading dashboard. Select a section from the sidebar.</p>
+        </div>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<script>
+$(document).ready(function(){
+    // When the sidebar link is clicked
+    $('.sidebar-link').on('click', function(event){
+        event.preventDefault();  // Prevent the default behavior (link redirection)
+        
+        // Get the data-content attribute (portfolio, transactions, etc.)
+        var contentType = $(this).data('content');
+        
+        // Use AJAX to fetch the content dynamically
+        $.ajax({
+            url: '/api/v1/' + contentType,  // The URL for the specific content, like /portfolio, /stocks, etc.
+            method: 'GET',
+            success: function(response){
+                // Replace the content inside the #main-content div with the response
+                $('#main-content').html(response);
+            },
+            error: function(xhr, status, error) {
+                console.error("Error fetching content: ", error);
+            }
+        });
+    });
+});
+</script>
+
+</body>
+</html>
