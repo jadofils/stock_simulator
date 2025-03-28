@@ -31,15 +31,15 @@
         }
 
         .positive-row {
-            background-color: #d4edda; /* Light green */
+            background-color: #d4edda;
         }
 
         .negative-row {
-            background-color: #f8d7da; /* Light red */
+            background-color: #f8d7da;
         }
 
         .neutral-row {
-            background-color: #fff3cd; /* Light gold */
+            background-color: #fff3cd;
         }
 
         .stock-table tr:nth-child(even) {
@@ -75,28 +75,14 @@
             }
         }
 
-        .timer-refresh {
-            margin-top: 20px;
-            text-align: center;
+        .positive-change {
+            color: blue;
         }
 
-        .timer {
-            font-size: 20px;
-            margin-bottom: 10px;
+        .negative-change {
+            color: gold;
         }
 
-        .refresh-button {
-            padding: 10px 20px;
-            background-color: #2c3e50;
-            color: white;
-            border: none;
-            cursor: pointer;
-            border-radius: 5px;
-        }
-
-        .refresh-button:hover {
-            background-color: #34495e;
-        }
     </style>
 </head>
 <body>
@@ -104,11 +90,6 @@
     
     <div class="loader" id="loader">
         <div class="circle"></div>
-    </div>
-
-    <div class="timer-refresh">
-        <div class="timer" id="timer">Next refresh in: 15:00</div>
-        <button class="refresh-button" onclick="manualRefresh()">Refresh Now</button>
     </div>
 
     <table class="stock-table">
@@ -126,84 +107,90 @@
             </tr>
         </thead>
         <tbody id="stockTableBody">
-            <!-- Rows will be dynamically populated -->
-        </tbody>
+            </tbody>
     </table>
 
     <script>
-        let countdown = 900; // 15 minutes in seconds
-
-        function updateTimerDisplay() {
-            const minutes = Math.floor(countdown / 60);
-            const seconds = countdown % 60;
-            document.getElementById("timer").textContent = `Next refresh in: ${minutes}:${seconds.toString().padStart(2, '0')}`;
-        }
-
+        let countdown = 15; // Countdown timer in seconds
+        let firstLoad = true; // Flag to determine if it's the first fetch
+    
         function startCountdown() {
-            updateTimerDisplay();
             const interval = setInterval(() => {
                 countdown -= 1;
                 if (countdown <= 0) {
                     clearInterval(interval);
-                    fetchStockData();
-                    countdown = 900; // Reset countdown
-                    startCountdown();
+                    fetchStockData(); // Fetch data when the countdown ends
+                    countdown = 15;   // Reset the timer
+                    startCountdown(); // Restart countdown
                 }
-                updateTimerDisplay();
-            }, 1000);
+            }, 1500);
         }
-
+    
         async function fetchStockData() {
             try {
-                document.getElementById('loader').style.display = 'flex';
-
+                // Show loader only during the first load
+                if (firstLoad) {
+                    document.getElementById('loader').style.display = 'flex';
+                }
+    
                 const response = await fetch('/api/v1/yfinance/investments');
-                const stockData = await response.json();
-
-                document.getElementById('loader').style.display = 'none';
-                const tableBody = document.getElementById('stockTableBody');
-                tableBody.innerHTML = '';
-
-                stockData.forEach(stock => {
-                    const row = document.createElement('tr');
-                    
-                    // Assign class based on the stock change
-                    let rowClass = 'neutral-row'; // Default to neutral
-                    if (stock.change > 0) {
-                        rowClass = 'positive-row';
-                    } else if (stock.change < 0) {
-                        rowClass = 'negative-row';
+                
+                if (response.status === 200) { // Ensure we only proceed for a successful response
+                    const stockData = await response.json();
+    
+                    if (firstLoad) {
+                        document.getElementById('loader').style.display = 'none'; // Hide loader after first fetch
+                        firstLoad = false; // Set flag to false for subsequent requests
                     }
-
-                    row.className = rowClass;
-
-                    row.innerHTML = `
-                        <td>${stock.symbol}</td>
-                        <td>${stock.name}</td>
-                        <td>$${stock.current_price.toFixed(2)}</td>
-                        <td>$${stock.change.toFixed(2)}</td>
-                        <td>${stock.change_percent.toFixed(2)}%</td>
-                        <td>${stock.volume.toLocaleString()}</td>
-                        <td>$${(stock.market_cap / 1_000_000_000).toFixed(2)}B</td>
-                        <td>$${stock['52_week_high'].toFixed(2)}</td>
-                        <td>$${stock['52_week_low'].toFixed(2)}</td>
-                    `;
-                    tableBody.appendChild(row);
-                });
+    
+                    const tableBody = document.getElementById('stockTableBody');
+                    tableBody.innerHTML = ''; // Clear the table content
+    
+                    // Populate the table with the fetched stock data
+                    stockData.forEach(stock => {
+                        const row = document.createElement('tr');
+                        
+                        let rowClass = 'neutral-row';
+                        if (stock.change > 0) {
+                            rowClass = 'positive-row';
+                        } else if (stock.change < 0) {
+                            rowClass = 'negative-row';
+                        }
+    
+                        row.className = rowClass;
+    
+                        const changeColorClass = stock.change > 0 ? 'positive-change' : stock.change < 0 ? 'negative-change' : '';
+    
+                        row.innerHTML = `
+                            <td>${stock.symbol}</td>
+                            <td>${stock.name}</td>
+                            <td>$${stock.current_price.toFixed(2)}</td>
+                            <td class="${changeColorClass}">$${stock.change.toFixed(2)}</td>
+                            <td class="${changeColorClass}">${stock.change_percent.toFixed(2)}%</td>
+                            <td>${stock.volume.toLocaleString()}</td>
+                            <td>$${(stock.market_cap / 1_000_000_000).toFixed(2)}B</td>
+                            <td>$${stock['52_week_high'].toFixed(2)}</td>
+                            <td>$${stock['52_week_low'].toFixed(2)}</td>
+                        `;
+                        tableBody.appendChild(row);
+                    });
+                } else {
+                    console.error('Error: Response returned with status', response.status);
+                }
             } catch (error) {
                 console.error('Error fetching stock data:', error);
-                document.getElementById('loader').innerHTML = 'Failed to load data.';
+                if (firstLoad) {
+                    document.getElementById('loader').innerHTML = 'Failed to load data.';
+                }
             }
         }
-
-        function manualRefresh() {
-            countdown = 10; // Reset countdown
-            fetchStockData();
-        }
-
+    
         // Initial setup
-        fetchStockData();
-        startCountdown();
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchStockData(); // Fetch data on page load
+            startCountdown(); // Start the countdown for realtime updates
+        });
     </script>
+    
 </body>
 </html>

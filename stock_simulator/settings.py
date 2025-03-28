@@ -26,23 +26,21 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'rest_framework',  # Add this line for DRF support
-
+    'rest_framework',  # Django Rest Framework
+    'corsheaders',      # For handling cross-origin requests
     # Custom apps
-    'accounts',       # User authentication app
-    'trading',        # Stock trading core app
-    'dashboard',      # User dashboard app
+    'accounts',         # User authentication app
+    'trading',          # Stock trading core app
+    'dashboard', 
+     'controller'       # User dashboard app
 ]
 
-# Static files configuration
-STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'static'),  # Central static folder (outside of 'accounts' app)
-]
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')  # Where collected static files will be stored
-STATIC_URL = '/static/'  # URL prefix for static files
+# CORS Configuration
+CORS_ALLOW_ALL_ORIGINS = True  # Allow all origins for development. Restrict in production.
 
 # Middleware configuration
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',  # Add corsheaders middleware first
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -52,6 +50,13 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+# Static files configuration
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static'),  # Central static folder
+]
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')  # Collected static files directory
+STATIC_URL = '/static/'  # URL prefix for static files
+
 # URL Configuration
 ROOT_URLCONF = 'stock_simulator.urls'
 
@@ -59,9 +64,7 @@ ROOT_URLCONF = 'stock_simulator.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [
-            BASE_DIR / 'templates',  # Main templates directory
-        ],      
+        'DIRS': [BASE_DIR / 'templates'],  # Main templates directory
         'APP_DIRS': True,  # Enable app-level template directories
         'OPTIONS': {
             'context_processors': [
@@ -77,25 +80,9 @@ TEMPLATES = [
 # WSGI application
 WSGI_APPLICATION = 'stock_simulator.wsgi.application'
 
-# Password validation
-AUTH_PASSWORD_VALIDATORS = [
-    {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
-]
-
 # Internationalization settings
 LANGUAGE_CODE = 'en-us'
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'UTC'  # Adjust to 'Africa/Kigali' based on your location
 USE_I18N = True
 USE_TZ = True
 

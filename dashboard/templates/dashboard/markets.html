@@ -207,8 +207,8 @@
 
             setTimeout(() => {
                 globalLoader.style.display = "none"; // Hide loader after first load
-                setInterval(updateAllTables, 5000); // Refresh every 5 seconds
-            }, 10); // Keep loader visible for 1.5 seconds
+                setInterval(updateAllTables, 100); // Refresh every 5 seconds
+            }, 1500); // Keep loader visible for 1.5 seconds
         }
 
         // Start dashboard initialization

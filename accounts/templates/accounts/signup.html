@@ -1,12 +1,11 @@
 {% load static %}
-
 <!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Stock Trading Simulator - Signup</title>
-    <!-- Include Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link
       href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css"
       rel="stylesheet"
@@ -31,10 +30,22 @@
       body {
         background-color: var(--background-color);
         display: flex;
-        justify-content: center;
-        align-items: center;
+        flex-direction: column; /* Use column layout */
         min-height: 100vh;
         padding: 20px;
+      }
+
+      .navbar {
+        background-color: var(--primary-color);
+      }
+
+      .navbar-brand,
+      .navbar-nav .nav-link {
+        color: var(--white);
+      }
+
+      .navbar-nav .nav-link:hover {
+        color: var(--secondary-color);
       }
 
       .auth-container {
@@ -45,6 +56,8 @@
         max-width: 400px;
         padding: 30px;
         text-align: center;
+        margin: auto; /* Center the form horizontally */
+        margin-top: 50px; /* Add space above the form */
       }
 
       .auth-header {
@@ -148,26 +161,79 @@
       .github-btn i {
         margin-right: 10px;
       }
+
+      .footer {
+        background-color: var(--primary-color);
+        color: var(--white);
+        padding: 20px 0;
+        text-align: center;
+        margin-top: auto; /* Push footer to bottom */
+      }
+
+      .footer a {
+        color: var(--white);
+        text-decoration: none;
+      }
+
+      .footer a:hover {
+        text-decoration: underline;
+      }
     </style>
   </head>
   <body>
-    <!-- Signup Form -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+      <div class="container">
+        <a class="navbar-brand" href="#">Stock Trading Simulator</a>
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navbarNav"
+          aria-controls="navbarNav"
+          aria-expanded="false"
+          aria-label="Toggle navigation"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav ms-auto">
+            <li class="nav-item">
+              <a class="nav-link" id="login" href="{% url 'login' %}"
+                >Login</a
+              >
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" id="register" href="{% url 'signup' %}"
+                >Register</a
+              >
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#">market</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
     <div class="auth-container">
       <h2 class="auth-header">Create an Account</h2>
-      <form>
-
+      <form method="post" action="{% url 'signup' %}">
+        {% csrf_token %}
         <div class="form-group">
           <label class="form-label">Username | Full Names</label>
           <input
-            type="username"
+            type="text"
+            name="username"
             class="form-control"
             placeholder="Enter your username"
             autocomplete="off"
           />
+        </div>
         <div class="form-group">
           <label class="form-label">Email</label>
           <input
             type="email"
+            name="email"
             class="form-control"
             placeholder="Enter your email"
             autocomplete="off"
@@ -177,20 +243,13 @@
           <label class="form-label">Password</label>
           <input
             type="password"
+            name="password"
             class="form-control"
             placeholder="Enter your password"
             autocomplete="off"
           />
         </div>
-        <div class="form-group">
-          <label class="form-label">Confirm Password</label>
-          <input
-            type="password"
-            class="form-control"
-            placeholder="Confirm your password"
-            autocomplete="off"
-          />
-        </div>
+      
         <button type="submit" class="btn">Sign Up</button>
 
         <div class="auth-footer">
@@ -198,17 +257,27 @@
         </div>
 
         <div class="social-login">
-          <!-- Google Login Button -->
           <button class="social-btn google-btn">
             <i class="bi bi-google"></i> Sign up with Google
           </button>
-          <!-- GitHub Login Button -->
           <button class="social-btn github-btn">
             <i class="bi bi-github"></i> Sign up with GitHub
           </button>
         </div>
       </form>
     </div>
-    <script src="{% static 'accounts/js/account.js' %}"></script>
+    <footer class="footer">
+      <div class="container">
+        <p>&copy; 2025 Stock Trading Simulator. All rights reserved.</p>
+        <p>
+          Developed by
+          <a href="#"
+            >Jado Fils Salim</a
+          >
+        </p>
+      </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
   </body>
 </html>
