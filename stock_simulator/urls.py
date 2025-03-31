@@ -13,4 +13,9 @@ urlpatterns = [
     path('api/', include('controller.urls')),  # Make sure this line is present to include your app's URLs
     path('api/',include('stock.urls')),
     path('api/',include('userprofile.urls')),
+    path('api/',include('portifolio.urls')),
+    path('api/',include('transactions.urls')),
+    path("api/",include('stockPriceHistory.urls'))
+
+  
 ]

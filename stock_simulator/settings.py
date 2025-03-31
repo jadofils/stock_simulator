@@ -35,6 +35,9 @@ INSTALLED_APPS = [
     'dashboard', 
     'controller' ,
     'userprofile'    ,  # User dashboard app
+    'portifolio',
+    'transactions',
+    'stockPriceHistory'
 ]
 
 # CORS Configuration
