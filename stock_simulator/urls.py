@@ -11,5 +11,6 @@ urlpatterns = [
     path('api/v1/trading/', include('trading.urls')),  # Include trading app URLs
 
     path('api/', include('controller.urls')),  # Make sure this line is present to include your app's URLs
-
+    path('api/',include('stock.urls')),
+    path('api/',include('userprofile.urls')),
 ]

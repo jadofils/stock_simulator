@@ -3,8 +3,9 @@ from django.views.decorators.csrf import csrf_exempt
 import json
 from accounts.models import User
 from .controller import AuthController  # Ensure you import the AuthController
-
 from django.contrib.auth.hashers import make_password
+from django.contrib.auth.hashers import check_password
+
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
 import json
@@ -176,48 +177,30 @@ def sort_users(request, sort_by, order):
 
 
 
-
-
-from django.http import JsonResponse
-from django.contrib.auth import authenticate
-
-
-
-
-@csrf_exempt  # Temporarily disable CSRF protection for API
+@csrf_exempt
 def login(request):
     if request.method == 'POST':
         try:
-            # Parse the JSON data from the request body
+            print("Request body:", request.body) #add this print statement.
             data = json.loads(request.body.decode('utf-8'))
+            print("Parsed data:", data) #add this print statement.
             email = data.get('email')
             password = data.get('password')
 
             if not email or not password:
-                return JsonResponse({'error': 'Email and password are required'}, status=400)
+                return JsonResponse({'error': 'Email || password are required'}, status=400)
 
-            try:
-                # Fetch the user by email
-                user = User.objects.get(email=email)
+            user_data = AuthController.login_user(email, password)
 
-                # Authenticate the user using username (since authenticate uses username, not email)
-                user = authenticate(request, username=user.username, password=password)
-
-                if user is not None and user.is_active:
-                    return JsonResponse({'message': 'Login successful', 'user': {
-                        'id': user.id,
-                        'username': user.username,
-                        'email': user.email,
-                        'is_active': user.is_active,
-                        'date_joined': user.date_joined
-                    }})
-                else:
-                    return JsonResponse({'error': 'Invalid credentials or account inactive'}, status=401)
-
-            except User.DoesNotExist:
-                return JsonResponse({'error': 'User with this email does not exist'}, status=404)
+            if isinstance(user_data, dict):
+                return JsonResponse({'message': 'Login successful', 'user': user_data})
+            else:
+                return JsonResponse({'error': user_data}, status=401 if user_data == "Invalid credentials" or user_data == "Account inactive" else 404 if user_data == "User not found" else 400)
 
         except json.JSONDecodeError:
             return JsonResponse({'error': 'Invalid JSON data'}, status=400)
+        except Exception as e:
+            print("Exception:", str(e)) #add this print statement.
+            return JsonResponse({'error': str(e)}, status=400)
 
     return JsonResponse({'error': 'Invalid request method'}, status=400)

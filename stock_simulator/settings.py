@@ -30,9 +30,11 @@ INSTALLED_APPS = [
     'corsheaders',      # For handling cross-origin requests
     # Custom apps
     'accounts',         # User authentication app
-    'trading',          # Stock trading core app
+    'trading',  
+    'stock'  ,              # Stock trading core app
     'dashboard', 
-     'controller'       # User dashboard app
+    'controller' ,
+    'userprofile'    ,  # User dashboard app
 ]
 
 # CORS Configuration

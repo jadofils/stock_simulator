@@ -1,7 +1,7 @@
 from django.shortcuts import get_object_or_404
 from django.http import JsonResponse
 from django.db.models import Q
-from django.contrib.auth.hashers import make_password
+from django.contrib.auth.hashers import make_password,check_password
 import json
 from accounts.models import User
 
@@ -102,3 +102,24 @@ class AuthController:
             for user in users
         ]
         return JsonResponse({"users": user_list}, status=200)
+    @staticmethod
+    def login_user(email, password):
+        try:
+            user = User.objects.get(email=email)
+            if check_password(password, user.password):
+                if user.is_active:
+                    return {
+                        'id': user.id,
+                        'username': user.username,
+                        'email': user.email,
+                        'is_active': user.is_active,
+                        'date_joined': user.date_joined,
+                    }
+                else:
+                    return "Account inactive"
+            else:
+                return "Invalid credentials"
+        except User.DoesNotExist:
+            return "User not found"
+        except Exception as e:
+            return str(e)  # Handle other potential errors
