@@ -1,7 +1,7 @@
 from django.shortcuts import get_object_or_404
 from django.http import JsonResponse, HttpResponseBadRequest, HttpResponseNotFound, HttpResponse
 import logging
-from accounts.models import User
+from accounts.models import User, UserProfile
 from .user_profile_controller import UserProfileController
 from django.views.decorators.csrf import csrf_exempt
 import json
@@ -14,10 +14,28 @@ def user_profile_list(request):
 def user_profile_detail(request, id):
     profile = UserProfileController.get_profile_by_id(id)
     if profile:
-        data = {'id': profile.id, 'user_id': profile.user.id, 'initial_balance': str(profile.initial_balance), 'current_balance': str(profile.current_balance), 'total_investment': str(profile.total_investment), 'total_profit_loss': str(profile.total_profit_loss)}
+        user = profile.user  # Get the associated User object
+        data = {
+            'profile': {
+                'id': profile.id,
+                'user_id': profile.user.id,
+                'initial_balance': str(profile.initial_balance),
+                'current_balance': str(profile.current_balance),
+                'total_investment': str(profile.total_investment),
+                'total_profit_loss': str(profile.total_profit_loss),
+            },
+            'user': {
+                'id': user.id,
+                'username': user.username,
+                'email': user.email,
+                'is_active': user.is_active,
+                'date_joined': user.date_joined.isoformat(),  # Convert datetime to ISO format
+            }
+        }
         return JsonResponse(data)
     else:
-        return HttpResponseNotFound("Profile not found")
+      return JsonResponse({'error': 'Profile not found'}, status=404)
+
 logger = logging.getLogger(__name__)
 
 @csrf_exempt
@@ -41,6 +59,11 @@ def user_profile_create(request, user_id):  # Accept user_id as a parameter
                 logger.error(f"User with ID {user_id} does not exist")
                 return JsonResponse({'error': 'User with the given ID does not exist'}, status=404)
 
+            # Check if a UserProfile already exists for the given user_id
+            if UserProfile.objects.filter(user=user).exists():
+                logger.error(f"UserProfile already exists for user_id: {user_id}")
+                return JsonResponse({'error': 'UserProfile already exists for this user'}, status=409)  # 409 Conflict
+
             profile = UserProfileController.create_profile(
                 user.id,
                 data['initial_balance'],
@@ -59,7 +82,15 @@ def user_profile_create(request, user_id):  # Accept user_id as a parameter
                         'initial_balance': str(profile.initial_balance),
                         'current_balance': str(profile.current_balance),
                         'total_investment': str(profile.total_investment),
-                        'total_profit_loss': str(profile.total_profit_loss)
+                        'total_profit_loss': str(profile.total_profit_loss),
+                    },
+                    'user': {
+                        'id': user.id,
+                        'username': user.username,
+                        'email': user.email,
+                        'is_active': user.is_active,
+                        'date_joined': user.date_joined.isoformat(),  # Convert datetime to ISO format
+                        # Add any other user fields you want to include
                     }
                 }, status=201)
             else:
@@ -71,34 +102,85 @@ def user_profile_create(request, user_id):  # Accept user_id as a parameter
             return JsonResponse({'error': 'Invalid JSON or missing data'}, status=400)
     else:
         return JsonResponse({'error': 'Only POST requests are allowed'}, status=405)
+
 @csrf_exempt
-def user_profile_update(request, id):
+def user_profile_update(request, id, user_id):
     if request.method == 'PUT':
         try:
             data = json.loads(request.body)
+
+            # Validate user_id from the URL
+            try:
+                user = User.objects.get(id=user_id)
+            except User.DoesNotExist:
+                return JsonResponse({'error': 'User not found'}, status=404)
+
+            # Validate profile exists and belongs to the user
+            try:
+                profile = UserProfile.objects.get(id=id, user=user)
+            except UserProfile.DoesNotExist:
+                return JsonResponse({'error': 'Profile not found or does not belong to user'}, status=404)
+
+            # Update the profile using the controller
             profile = UserProfileController.update_profile(
                 id,
-                data['user_id'],
+                user_id,
                 data['initial_balance'],
                 data['current_balance'],
                 data['total_investment'],
                 data['total_profit_loss']
             )
+
             if profile:
-                return JsonResponse({'message': 'Profile updated successfully'})
+                return JsonResponse({
+                    'message': 'Profile updated successfully',
+                    'profile': {
+                        'id': profile.id,
+                        'user_id': profile.user.id,
+                        'initial_balance': str(profile.initial_balance),
+                        'current_balance': str(profile.current_balance),
+                        'total_investment': str(profile.total_investment),
+                        'total_profit_loss': str(profile.total_profit_loss),
+                    },
+                    'user': {
+                        'id': user.id,
+                        'username': user.username,
+                        'email': user.email,
+                        'is_active': user.is_active,
+                        'date_joined': user.date_joined.isoformat(),
+                    }
+                })
             else:
-                return HttpResponseNotFound("Profile not found or invalid user_id")
+                return JsonResponse({'error': 'Failed to update profile'}, status=500)
         except (KeyError, json.JSONDecodeError):
-            return HttpResponseBadRequest("Invalid data provided.")
+            return JsonResponse({'error': 'Invalid JSON or missing data'}, status=400)
     else:
-        return HttpResponseBadRequest("Only PUT requests are allowed.")
+        return JsonResponse({'error': 'Only PUT requests are allowed'}, status=405)
+
 
 @csrf_exempt
-def user_profile_delete(request, id):
+def user_profile_delete(request, id, user_id):
     if request.method == 'DELETE':
-        if UserProfileController.delete_profile(id):
-            return HttpResponse(status=204)
-        else:
-            return HttpResponseNotFound("Profile not found")
+        try:
+            # Validate that the user exists
+            try:
+                user = User.objects.get(id=user_id)
+            except User.DoesNotExist:
+                return JsonResponse({'error': 'User not found'}, status=404)
+
+            # Validate that the profile exists and is linked to the user
+            try:
+                profile = UserProfile.objects.get(id=id, user=user)
+            except UserProfile.DoesNotExist:
+                return JsonResponse({'error': 'Profile not found or does not belong to the user'}, status=404)
+
+            # Perform the deletion
+            if UserProfileController.delete_profile(id):
+                return JsonResponse({'message': 'Profile deleted successfully'}, status=204)
+            else:
+                return JsonResponse({'error': 'Failed to delete profile'}, status=500)
+
+        except Exception as e:
+            return JsonResponse({'error': f'An unexpected error occurred: {str(e)}'}, status=500)
     else:
-        return HttpResponseBadRequest("Only DELETE requests are allowed.")
+        return JsonResponse({'error': 'Only DELETE requests are allowed'}, status=405)

@@ -10,7 +10,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
 import json
 
-@csrf_exempt  # Temporarily disable CSRF protection for API
+@csrf_exempt
 def create_user(request):
     if request.method == 'POST':
         try:
