@@ -5,35 +5,95 @@ import json
 
 @csrf_exempt
 def portfolio_list(request):
-    portfolios = PortfolioController.get_all_portfolios()
-    data = [
-        {
-            'id': p.id,
-            'user_id': p.user.id,
-            'stock_id': p.stock.id,
-            'quantity': str(p.quantity),
-            'purchase_price': str(p.purchase_price),
-            'purchase_date': p.purchase_date.isoformat()
-        }
-        for p in portfolios
-    ]
-    return JsonResponse(data, safe=False)
+    # Validate the request method
+    if request.method != 'GET':
+        return JsonResponse({"error": "Invalid request method. Only GET is allowed."}, status=405)
+
+    try:
+        # Fetch all portfolios from the controller
+        portfolios = PortfolioController.get_all_portfolios()
+        
+        if not portfolios:
+            return JsonResponse({"error": "No portfolios found."}, status=404)
+        
+        # Prepare the response data
+        data = [
+            {
+                'id': p.id,
+                'user_id': p.user.id,
+                'stock_id': p.stock.id,
+                'quantity': str(p.quantity),
+                'purchase_price': str(p.purchase_price),
+                'purchase_date': p.purchase_date.isoformat(),
+                'user': {
+                    'id': p.user.id,
+                    'name': p.user.username,
+                    'email': p.user.email
+                },
+                'stock': {
+                    'id': p.stock.id,
+                    'name': p.stock.name,
+                    'symbol': p.stock.symbol,
+                    'price': p.stock.current_price,
+                    'previous_close': p.stock.previous_close,
+                    'market_cap': p.stock.market_cap
+                }
+            }
+            for p in portfolios
+        ]
+        
+        # Return the JSON response
+        return JsonResponse({"data": data}, safe=False, status=200)
+
+    except Exception as e:
+        # Handle unexpected errors
+        return JsonResponse({"error": f"An error occurred: {str(e)}"}, status=500)
+
+
 
 @csrf_exempt
 def portfolio_detail(request, id):
-    portfolio = PortfolioController.get_portfolio_by_id(id)
-    if portfolio:
+    # Validate the request method
+    if request.method != 'GET':
+        return JsonResponse({"error": "Invalid request method. Only GET is allowed."}, status=405)
+    
+    # Attempt to fetch portfolio details
+    try:
+        portfolio = PortfolioController.get_portfolio_by_id(id)
+        if not portfolio:
+            return JsonResponse({"error": "Portfolio not found."}, status=404)
+        
+        # Prepare the response data
         data = {
-            'id': portfolio.id,
-            'user_id': portfolio.user.id,
-            'stock_id': portfolio.stock.id,
-            'quantity': str(portfolio.quantity),
-            'purchase_price': str(portfolio.purchase_price),
-            'purchase_date': portfolio.purchase_date.isoformat()
+            'portfolio': {
+                'id': portfolio.id,
+                'user_id': portfolio.user.id,
+                'stock_id': portfolio.stock.id,
+                'quantity': str(portfolio.quantity),
+                'purchase_price': str(portfolio.purchase_price),
+                'purchase_date': portfolio.purchase_date.isoformat(),
+                'user': {
+                    'id': portfolio.user.id,
+                    'name': portfolio.user.username,
+                    'email': portfolio.user.email
+                },
+                'stock': {
+                    'id': portfolio.stock.id,
+                    'name': portfolio.stock.name,
+                    'symbol': portfolio.stock.symbol,
+                    'price': portfolio.stock.current_price,
+                    'previous_close': portfolio.stock.previous_close,
+                    'market_cap': portfolio.stock.market_cap
+                }
+            }
         }
-        return JsonResponse(data)
-    else:
-        return HttpResponseNotFound("Portfolio not found")
+
+        # Return successful JSON response
+        return JsonResponse({"data": data}, status=200)
+
+    except Exception as e:
+        # Handle any unexpected errors
+        return JsonResponse({"error": f"An error occurred: {str(e)}"}, status=500)
 
 @csrf_exempt
 def portfolio_create(request):
@@ -55,7 +115,20 @@ def portfolio_create(request):
                         'stock_id': portfolio.stock.id,
                         'quantity': str(portfolio.quantity),
                         'purchase_price': str(portfolio.purchase_price),
-                        'purchase_date': portfolio.purchase_date.isoformat()
+                        'purchase_date': portfolio.purchase_date.isoformat() ,
+                'user': {
+                    'id': portfolio.user.id,
+                    'name': portfolio.user.username,
+                    'email': portfolio.user.email,
+                    "stock":{
+                        "id":portfolio.stock.id,
+                        "name": portfolio.stock.name,
+                        "symbol":portfolio.stock.symbol,
+                        "price": portfolio.stock.current_price,
+                        "previous_close": portfolio.stock.previous_close,
+                        "market_cap": portfolio.stock.market_cap,
+                    }
+                }
                     }
                 }, status=201)
             else:
@@ -67,29 +140,54 @@ def portfolio_create(request):
 
 @csrf_exempt
 def portfolio_update(request, id):
-    if request.method == 'PUT':
-        try:
-            data = json.loads(request.body)
-            portfolio = PortfolioController.update_portfolio(
-                id,
-                data['quantity'],
-                data['purchase_price']
-            )
-            if portfolio:
-                return JsonResponse({'message': 'Portfolio updated successfully'})
-            else:
-                return HttpResponseNotFound("Portfolio not found")
-        except (KeyError, json.JSONDecodeError):
-            return HttpResponseBadRequest("Invalid data provided")
-    else:
+    if request.method != 'PUT':
         return HttpResponseBadRequest("Only PUT requests are allowed")
+    
+    try:
+        # Parse JSON data from the request body
+        data = json.loads(request.body)
+        
+        # Validate required fields
+        if 'quantity' not in data or 'purchase_price' not in data:
+            return HttpResponseBadRequest("Missing required fields: 'quantity' and 'purchase_price'")
+        
+        # Attempt to update the portfolio
+        portfolio = PortfolioController.update_portfolio(
+            id,
+            data['quantity'],
+            data['purchase_price']
+        )
+        
+        if portfolio:
+            return JsonResponse({
+                'message': 'Portfolio updated successfully',
+                'portfolio': {
+                    'id': portfolio.id,
+                    'quantity': str(portfolio.quantity),
+                    'purchase_price': str(portfolio.purchase_price)
+                }
+            }, status=200)
+        else:
+            return HttpResponseNotFound("Portfolio not found")
+    except json.JSONDecodeError:
+        return HttpResponseBadRequest("Invalid JSON data provided")
+    except Exception as e:
+        return JsonResponse({"error": f"An unexpected error occurred: {str(e)}"}, status=500)
 
 @csrf_exempt
 def portfolio_delete(request, id):
-    if request.method == 'DELETE':
-        if PortfolioController.delete_portfolio(id):
-            return HttpResponse(status=204)
-        else:
-            return HttpResponseNotFound("Portfolio not found")
-    else:
+    if request.method != 'DELETE':
         return HttpResponseBadRequest("Only DELETE requests are allowed")
+    
+    try:
+        # Attempt to delete the portfolio
+        deleted = PortfolioController.delete_portfolio(id)
+        
+        if deleted:
+            return HttpResponse(status=204)  # No Content response
+        else:
+            # Correct key-value pair for the response
+            return JsonResponse({"message": "Portfolio not found"}, status=404)
+    except Exception as e:
+        # Proper JsonResponse with `safe=False` for error handling, if needed
+        return JsonResponse({"error": f"An unexpected error occurred: {str(e)}"}, status=500)

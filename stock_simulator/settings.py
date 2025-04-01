@@ -69,7 +69,7 @@ ROOT_URLCONF = 'stock_simulator.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'],  # Main templates directory
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],
         'APP_DIRS': True,  # Enable app-level template directories
         'OPTIONS': {
             'context_processors': [

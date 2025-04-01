@@ -37,19 +37,20 @@ class TransactionController:
             logger.error(f"Error while creating transaction: {str(e)}")
             return None
 
-    @staticmethod
-    def update_transaction(transaction_id, quantity, price_per_share):
-        try:
-            transaction = Transaction.objects.get(id=transaction_id)
-            transaction.quantity = quantity
-            transaction.price_per_share = price_per_share
-            transaction.total_value = quantity * price_per_share
-            transaction.save()
-            logger.info(f"Transaction with ID {transaction_id} updated successfully")
-            return transaction
-        except Transaction.DoesNotExist:
-            logger.error(f"Transaction with ID {transaction_id} does not exist")
-            return None
+#NO transaction updates on the dataase after sell or buy
+    # @staticmethod
+    # def update_transaction(transaction_id, quantity, price_per_share):
+    #     try:
+    #         transaction = Transaction.objects.get(id=transaction_id)
+    #         transaction.quantity = quantity
+    #         transaction.price_per_share = price_per_share
+    #         transaction.total_value = quantity * price_per_share
+    #         transaction.save()
+    #         logger.info(f"Transaction with ID {transaction_id} updated successfully")
+    #         return transaction
+    #     except Transaction.DoesNotExist:
+    #         logger.error(f"Transaction with ID {transaction_id} does not exist")
+    #         return None
 
     @staticmethod
     def delete_transaction(transaction_id):
